@@ -110,17 +110,17 @@ class ircBot():
     
     def send(self,command,*params):
         if len(params) > 0:
-            message = command+" "+" ".join(params[:-1])+" :"+params[-1]
+            message = command+" "+" ".join(params[:-1])+" :"+params[-1]+"\r\n"
         else:
-            message = command
+            message = command+"\r\n"
         self.sendQueue.put(message)
     
     def connect(self,host,port,*nicks):
         self.socket.connect((host,port))
+        self.send("NICK",nicks[0])
+        self.send("USER","pythonIrcBot","BunnyBaseSystem","PythonIRCBot","?","Sailor (v3)")
         self.recvThread.start()
         self.sendThread.start()
-        self.send("NICK",nicks[0])
-        self.send("USER","pythonIrcBot",".",".")
     
     
     ### Commands ###

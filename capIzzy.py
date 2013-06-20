@@ -5,4 +5,4 @@ import ircBot
 class capIzzy(ircBot.ircBot):
     pass
 
-capIzzy().connect("irc.canternet.org",6667,"CaptianIzzy")
+capIzzy().connect("irc.canternet.org",6667,"CaptainIzzy")
