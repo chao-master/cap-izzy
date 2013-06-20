@@ -10,6 +10,8 @@ Process messages and commands
 import Queue
 import socket
 import threading
+import time
+import sched
 
 class command():
     def __init__(self,minArgs,maxArgs,fun):
@@ -23,7 +25,7 @@ class command():
                 raise Exception     #TODO exception
             if len(params) > maxArgs:
                 params[minArgs-1:] = [" ".join(params[minArgs-1:])]
-            self.fun(caller,params)
+            self.fun(caller,{"replyTo":caller,"user":caller},*params)
         except Exception:
             self.send("PRIVMSG",caller,"Error") #TODO exception
     
@@ -35,7 +37,8 @@ class ircBot():
         self.recvThread = threading.Thread(target=ircBot._recvLoop,args=[self])
         self.sendThread = threading.Thread(target=ircBot._sendLoop,args=[self])
         self.commands = {}
-        self._initCommands()
+        self.initCommands()
+        self.scheduler = sched.scheduler(time.time,time.sleep)
                     
     def parseMessage(self,msg):
         prefix = ['','',''] #Prefix format: Nick/Server,User,Host
@@ -97,12 +100,16 @@ class ircBot():
                 if message == "": continue
                 prefix,command,params = self.parseMessage(message)
                 if command == "PING":
-                    self.send("PONG",params)
+                    self.send("PONG",*params)
                 elif command == "PRIVMSG":
                     print params[0],"|",prefix[0],">",params[1]
                     if params[1][0] == ".": #TODO magic character
                         botCmd,botParams = params[1][1:].split(" ",2)
                         self.commands[botCommand](prefix[1],botParams)
+                elif command == 42:
+                    self.onConnected()
+                elif command == 900:
+                    self.onLoggedin()   #todo move ns login back here.
                 else:
                     print prefix,command,params
                 #TODO handle nick changes ect."""
@@ -125,5 +132,11 @@ class ircBot():
     
     ### Commands ###
     
-    def _initCommands(self):
+    def initCommands(self):
+        pass
+        
+    def onConnected(self):
+        pass
+    
+    def onLoggedin(self):
         pass
