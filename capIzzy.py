@@ -11,7 +11,7 @@ PASSWORD = open("pswd").read() #To avoid it ending up on github ;)
 class meetInfo():
     def __init__(self,t,l,p,d):
         self.datetime = datetime.strptime(p,"%d %b %Y %H:%M:%S")
-        #self.location = None #Lacking data
+        self.location = d.split(" ",7)[-1] #Expermental
         self.title = t
         self.description = d
         self.link = l
@@ -33,19 +33,21 @@ class capIzzy(ircBot):
 
     def initCommands(self):
         self.commands = {
-            "meets":command(0,0,self.getUpcomingMeets)
-            #"navigation":command(2,2,self.navigateToMeet) #Unimplmented RSS feed lacks location data
+            "meets":command(0,0,self.getUpcomingMeets),
+            "navigate":command(2,2,self.navigateToMeet) #Tempremenal - Not fully implmented RSS feed lacks location data
         }
+        self.commands["nav"] = self.commands["navigate"]
     
     def getUpcomingMeets(self,cmdInfo):
-        self.send("PRIVMSG",cmdInfo["replyTo"],"Here are the next few upcoming meets")#TODO navigation#, for help getting to them use the Navigate command: .navigate [start location] [meet no]")
+        self.send("PRIVMSG",cmdInfo["replyTo"],"Here are the next few upcoming meets, for help getting to them use the Navigate command: .navigate [meet no] [start location]")
         for i,m in enumerate(self.upComingMeets):
             self.send("PRIVMSG",cmdInfo["replyTo"],"[#{0}] {1}".format(i,m))
  
-    def navigateToMeet(self,cmdInfo,startPoint,goalMeet):
-        meetLocation = urllib.quote_plus(upcomingMeets[goalMeet].location)
-        meetDate = urllib.quote_plus(upcomingMeets[goalMeet].datetime.strftime("%d/%m/%y"))
-        meetTime = urllib.quote_plus(upcomingMeets[goalMeet].datetime.strftime("%H:%M"))
+    def navigateToMeet(self,cmdInfo,goalMeet,startPoint):
+        goalMeet = int(goalMeet)
+        meetLocation = urllib.quote_plus(self.upComingMeets[goalMeet].location)
+        meetDate     = urllib.quote_plus(self.upComingMeets[goalMeet].datetime.strftime("%d/%m/%y"))
+        meetTime     = urllib.quote_plus(self.upComingMeets[goalMeet].datetime.strftime("%H:%M"))
         self.send("PRIVMSG",cmdInfo["replyTo"],"Here you go, this should help get you here. https://maps.google.co.uk/maps?ttype=arr&dirflg=r&saddr={start}&daddr={meetLocation}&date={date}&time={time}".format(start=startPoint,meetLocation=meetLocation,date=meetDate,time=meetTime))
         
     def updateMeetinfo(self): #TODO multithread?

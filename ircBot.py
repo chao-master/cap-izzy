@@ -20,12 +20,14 @@ class command():
         self.fun = fun
     
     def __call__(self,botRef,caller,channel,params):
+        if channel[0] != "#":   #if not in a channel (so if private)
+            channel = caller    #Set channel to the caller for replyTo
         try:
             if params:
                 if len(params) < self.minArgs:
                     raise Exception     #TODO exception
                 if len(params) > self.maxArgs:
-                    params[minArgs-1:] = [" ".join(params[minArgs-1:])]
+                    params[self.minArgs-1:] = [" ".join(params[self.minArgs-1:])]
                 self.fun({"replyTo":channel,"user":caller},*params)
             else:
                 self.fun({"replyTo":channel,"user":caller})
@@ -111,7 +113,7 @@ class ircBot():
                     print params[0],"|",prefix[0],">",params[1]
                     if params[1][0] == ".": #TODO magic character
                         try:
-                            botCmd,botParams = params[1][1:].split(" ",2)
+                            botCmd,botParams = params[1][1:].split(" ",1)
                             botParams = botParams.split(" ")
                         except ValueError:
                             botCmd = params[1][1:]
