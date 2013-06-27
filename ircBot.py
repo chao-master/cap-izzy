@@ -19,15 +19,19 @@ class command():
         self.maxArgs = maxArgs
         self.fun = fun
     
-    def __call__(self,caller,params):
+    def __call__(self,botRef,caller,params):
         try:
-            if len(params) < minArgs:
+            if len(params) < self.minArgs:
                 raise Exception     #TODO exception
-            if len(params) > maxArgs:
+            if len(params) > self.maxArgs:
                 params[minArgs-1:] = [" ".join(params[minArgs-1:])]
-            self.fun(caller,{"replyTo":caller,"user":caller},*params)
-        except Exception:
-            self.send("PRIVMSG",caller,"Error") #TODO exception
+            if params:
+                self.fun(caller,{"replyTo":caller,"user":caller},*params)
+            else:
+                self.fun(caller,{"replyTo":caller,"user":caller})
+        except Exception as e:
+            botRef.send("PRIVMSG",caller,"Error") #TODO exception
+            print e
     
             
 class ircBot():
@@ -35,7 +39,9 @@ class ircBot():
         self.sendQueue = Queue.Queue()
         self.socket = socket.socket()
         self.recvThread = threading.Thread(target=ircBot._recvLoop,args=[self])
+        self.recvThread.deamon = True
         self.sendThread = threading.Thread(target=ircBot._sendLoop,args=[self])
+        self.sendThread.deamon = True
         self.commands = {}
         self.initCommands()
         self.scheduler = sched.scheduler(time.time,time.sleep)
@@ -104,8 +110,13 @@ class ircBot():
                 elif command == "PRIVMSG":
                     print params[0],"|",prefix[0],">",params[1]
                     if params[1][0] == ".": #TODO magic character
-                        botCmd,botParams = params[1][1:].split(" ",2)
-                        self.commands[botCommand](prefix[1],botParams)
+                        try:
+                            botCmd,botParams = params[1][1:].split(" ",2)
+                            botParams = botParams.split(" ")
+                        except ValueError:
+                            botCmd = params[1][1:]
+                            botParams = []
+                        self.commands[botCmd](self,prefix[1],botParams)
                 elif command == 42:
                     self.onConnected()
                 elif command == 900:
