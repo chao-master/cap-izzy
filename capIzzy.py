@@ -45,6 +45,7 @@ class capIzzy(ircBot):
  
     def navigateToMeet(self,cmdInfo,goalMeet,startPoint):
         goalMeet = int(goalMeet)
+        startPoint   = urllib.quote_plus(startPoint)
         meetLocation = urllib.quote_plus(self.upComingMeets[goalMeet].location)
         meetDate     = urllib.quote_plus(self.upComingMeets[goalMeet].datetime.strftime("%d/%m/%y"))
         meetTime     = urllib.quote_plus(self.upComingMeets[goalMeet].datetime.strftime("%H:%M"))
