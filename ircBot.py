@@ -19,18 +19,18 @@ class command():
         self.maxArgs = maxArgs
         self.fun = fun
     
-    def __call__(self,botRef,caller,params):
+    def __call__(self,botRef,caller,channel,params):
         try:
-            if len(params) < self.minArgs:
-                raise Exception     #TODO exception
-            if len(params) > self.maxArgs:
-                params[minArgs-1:] = [" ".join(params[minArgs-1:])]
             if params:
-                self.fun(caller,{"replyTo":caller,"user":caller},*params)
+                if len(params) < self.minArgs:
+                    raise Exception     #TODO exception
+                if len(params) > self.maxArgs:
+                    params[minArgs-1:] = [" ".join(params[minArgs-1:])]
+                self.fun({"replyTo":channel,"user":caller},*params)
             else:
-                self.fun(caller,{"replyTo":caller,"user":caller})
+                self.fun({"replyTo":channel,"user":caller})
         except Exception as e:
-            botRef.send("PRIVMSG",caller,"Error") #TODO exception
+            botRef.send("PRIVMSG",caller,"Error whilst executing the command") #TODO exception
             print e
     
             
@@ -116,7 +116,7 @@ class ircBot():
                         except ValueError:
                             botCmd = params[1][1:]
                             botParams = []
-                        self.commands[botCmd](self,prefix[1],botParams)
+                        self.commands[botCmd](self,prefix[1],params[0],botParams)
                 elif command == 42:
                     self.onConnected()
                 elif command == 900:

@@ -39,7 +39,7 @@ class capIzzy(ircBot):
     
     def getUpcomingMeets(self,cmdInfo):
         self.send("PRIVMSG",cmdInfo["replyTo"],"Here are the next few upcoming meets")#TODO navigation#, for help getting to them use the Navigate command: .navigate [start location] [meet no]")
-        for i,m in enumerate(upComingMeets):
+        for i,m in enumerate(self.upComingMeets):
             self.send("PRIVMSG",cmdInfo["replyTo"],"[#{0}] {1}".format(i,m))
  
     def navigateToMeet(self,cmdInfo,startPoint,goalMeet):
@@ -53,7 +53,6 @@ class capIzzy(ircBot):
         data = feed.read()
         feed.close()
         match = r"<title>([^<]*)</title>\s*<link>[^<]*</link>\s*<guid>([^<]*)</guid>\s*<pubDate>([^<]*)</pubDate>\s*<description><!\[CDATA\[(.*?)]]></description>"
-        print data,re.findall(match,data)
         self.upComingMeets = [meetInfo(t,l,p[5:-6],re.sub("<[^>]*>","",d)) for t,l,p,d in re.findall(match,data)]
         self.upComingMeets.sort(lambda a,b:(a.datetime-b.datetime).days)
         if len(self.upComingMeets) > 1:
