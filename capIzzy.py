@@ -18,6 +18,18 @@ class meetInfo():
         
     def __str__(self):
         return "{title}: {description} ({link})".format(title=self.title,description=self.description,link=self.link)
+        
+    def __eq__(self,other):
+        return (
+            isinstance(other,meetInfo) and
+            self.link == other.link and
+            self.datetime == other.datetime and
+            self.title == other.title and
+            self.description == other.description
+        )
+        
+    def __ne__(self,other):
+        return not self.__eq__(other)
 
 class capIzzy(ircBot):
     def __init__(self):
@@ -30,6 +42,7 @@ class capIzzy(ircBot):
     
     def onLoggedin(self):
         self.updateMeetinfo()
+        self.scheduler.run()
 
     def initCommands(self):
         self.commands = {
@@ -52,14 +65,17 @@ class capIzzy(ircBot):
         self.send("PRIVMSG",cmdInfo["replyTo"],"Here you go, this should help get you here. https://maps.google.co.uk/maps?ttype=arr&dirflg=r&saddr={start}&daddr={meetLocation}&date={date}&time={time}".format(start=startPoint,meetLocation=meetLocation,date=meetDate,time=meetTime))
         
     def updateMeetinfo(self): #TODO multithread?
+        curNext = None
+        if len(self.upComingMeets) > 0: #TODO BTAFFTP
+            curNext = self.upComingMeets[0]
         feed = urllib.urlopen("http://bristolbronies.co.uk/meet/feed/")
         data = feed.read()
         feed.close()
         match = r"<title>([^<]*)</title>\s*<link>[^<]*</link>\s*<guid>([^<]*)</guid>\s*<pubDate>([^<]*)</pubDate>\s*<description><!\[CDATA\[(.*?)]]></description>"
         self.upComingMeets = [meetInfo(t,l,p[5:-6],re.sub("<[^>]*>","",d)) for t,l,p,d in re.findall(match,data)]
         self.upComingMeets.sort(lambda a,b:(a.datetime-b.datetime).days)
-        if len(self.upComingMeets) > 1:
+        if len(self.upComingMeets) > 0 and curNext != self.upComingMeets[0]: #TODO BTAFFTP
             self.send("TOPIC","#bristolbronies","Next upcoming Bristol Bronies meet: {nextMeet}. For more upcoming meets type '.meets'".format(nextMeet=self.upComingMeets[0]))
-        self.scheduler.enter(60,50,capIzzy.updateMeetinfo,[self])
+        self.scheduler.enter(60*60,1000,capIzzy.updateMeetinfo,[self])
 
 capIzzy().connect("irc.canternet.org",6667,"CaptainIzzy")
