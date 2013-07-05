@@ -2,9 +2,11 @@
 
 from ircBot import *
 import urllib
+import threading
 from HTMLParser import HTMLParser
 from datetime import datetime
 import re
+import sched
 
 PASSWORD = open("pswd").read() #To avoid it ending up on github ;)
    
@@ -42,7 +44,7 @@ class capIzzy(ircBot):
     
     def onLoggedin(self):
         self.updateMeetinfo()
-        self.scheduler.run()
+        threading.Thread(target=sched.scheduler.run,args=[self.scheduler])
 
     def initCommands(self):
         self.commands = {
@@ -64,7 +66,7 @@ class capIzzy(ircBot):
         meetTime     = urllib.quote_plus(self.upComingMeets[goalMeet].datetime.strftime("%H:%M"))
         self.send("PRIVMSG",cmdInfo["replyTo"],"Here you go, this should help get you here. https://maps.google.co.uk/maps?ttype=arr&dirflg=r&saddr={start}&daddr={meetLocation}&date={date}&time={time}".format(start=startPoint,meetLocation=meetLocation,date=meetDate,time=meetTime))
         
-    def updateMeetinfo(self): #TODO multithread?
+    def updateMeetinfo(self):
         curNext = None
         if len(self.upComingMeets) > 0: #TODO BTAFFTP
             curNext = self.upComingMeets[0]

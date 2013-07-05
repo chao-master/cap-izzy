@@ -95,37 +95,43 @@ class ircBot():
     def _sendLoop(self):
         while 1:
             message = self.sendQueue.get(True)
+            if message == "#STOP#":
+                break
             print "^^", message
             self.socket.sendall(message)
             self.sendQueue.task_done()
     
     def _recvLoop(self):
-        while 1:
-            buff= ""
-            while (buff[-2:] != "\r\n"):
-                buff = buff + self.socket.recv(1024)
-            for message in buff.split("\r\n"):
-                if message == "": continue
-                prefix,command,params = self.parseMessage(message)
-                if command == "PING":
-                    self.send("PONG",*params)
-                elif command == "PRIVMSG":
-                    print params[0],"|",prefix[0],">",params[1]
-                    if params[1][0] == ".": #TODO magic character
-                        try:
-                            botCmd,botParams = params[1][1:].split(" ",1)
-                            botParams = botParams.split(" ")
-                        except ValueError:
-                            botCmd = params[1][1:]
-                            botParams = []
-                        self.commands[botCmd](self,prefix[1],params[0],botParams)
-                elif command == 42:
-                    self.onConnected()
-                elif command == 900:
-                    self.onLoggedin()   #todo move ns login back here.
-                else:
-                    print prefix,command,params
-                #TODO handle nick changes ect."""
+        try:
+            while 1:
+                buff= ""
+                while (buff[-2:] != "\r\n"):
+                    buff = buff + self.socket.recv(1024)
+                for message in buff.split("\r\n"):
+                    if message == "": continue
+                    prefix,command,params = self.parseMessage(message)
+                    if command == "PING":
+                        self.send("PONG",*params)
+                    elif command == "PRIVMSG":
+                        print params[0],"|",prefix[0],">",params[1]
+                        if params[1][0] == ".": #TODO magic character
+                            try:
+                                botCmd,botParams = params[1][1:].split(" ",1)
+                                botParams = botParams.split(" ")
+                            except ValueError:
+                                botCmd = params[1][1:]
+                                botParams = []
+                            self.commands[botCmd](self,prefix[1],params[0],botParams)
+                    elif command == 42:
+                        self.onConnected()
+                    elif command == 900:
+                        self.onLoggedin()   #todo move ns login back here.
+                    else:
+                        print prefix,command,params #DEBUG
+                    #TODO handle nick changes ect."""
+        except socket.timeout:
+            print "Connection timed out on recv"
+            self.sendQueue.put("#STOP#")
             
     
     def send(self,command,*params):
@@ -139,6 +145,7 @@ class ircBot():
         self.socket.connect((host,port))
         self.send("NICK",nicks[0])
         self.send("USER","pythonIrcBot","BunnyBaseSystem","PythonIRCBot","?","Sailor (v3)")
+        self.socket.settimeout(5*60) #Timeout set to 5 minuets
         self.recvThread.start()
         self.sendThread.start()
     
