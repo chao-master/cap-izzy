@@ -34,17 +34,14 @@ class meetInfo():
         return not self.__eq__(other)
 
 class capIzzy(ircBot):
-    def __init__(self):
-        ircBot.__init__(self)
+    def __init__(self,host,port,nick,password,autojoin=[]):
+        ircBot.__init__(self,host,port,nick,password,autojoin)
         self.upComingMeets=[]
-        
-    def onConnected(self):
-        self.send("PRIVMSG","nickserv","identify CaptainIzzy "+PASSWORD)
-        self.send("JOIN","#bristolbronies")
     
     def onLoggedin(self):
         self.updateMeetinfo()
-        threading.Thread(target=sched.scheduler.run,args=[self.scheduler])
+        schedThread = threading.Thread(target=sched.scheduler.run,args=[self.scheduler])
+        schedThread.deamon = True
 
     def initCommands(self):
         self.commands = {
@@ -68,8 +65,10 @@ class capIzzy(ircBot):
         
     def updateMeetinfo(self):
         curNext = None
-        if len(self.upComingMeets) > 0: #TODO BTAFFTP
-            curNext = self.upComingMeets[0]
+        try:
+            curNext = self.upcomingMeets[0]
+        except IndexError:
+            pass
         feed = urllib.urlopen("http://bristolbronies.co.uk/meet/feed/")
         data = feed.read()
         feed.close()
@@ -80,4 +79,5 @@ class capIzzy(ircBot):
             self.send("TOPIC","#bristolbronies","Next upcoming Bristol Bronies meet: {nextMeet}. For more upcoming meets type '.meets'".format(nextMeet=self.upComingMeets[0]))
         self.scheduler.enter(60*60,1000,capIzzy.updateMeetinfo,[self])
 
-capIzzy().connect("irc.canternet.org",6667,"CaptainIzzy")
+capIzzy("irc.canternet.org",6667,"CaptainIzzyDev",PASSWORD,["#bristolbronies"]).connect()
+

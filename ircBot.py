@@ -37,7 +37,12 @@ class command():
     
             
 class ircBot():
-    def __init__(self):
+    def __init__(self,host,port,nick,password,autojoin=[]):
+        self.host = host
+        self.port = port
+        self.nick = nick
+        self.password = password
+        self.autojoin = autojoin
         self.sendQueue = Queue.Queue()
         self.socket = socket.socket()
         self.recvThread = threading.Thread(target=ircBot._recvLoop,args=[self])
@@ -141,22 +146,20 @@ class ircBot():
             message = command+"\r\n"
         self.sendQueue.put(message)
     
-    def connect(self,host,port,*nicks):
-        self.socket.connect((host,port))
-        self.send("NICK",nicks[0])
+    def connect(self):
+        self.socket.connect((self.host,self.port))
+        self.send("NICK",self.nick)
         self.send("USER","pythonIrcBot","BunnyBaseSystem","PythonIRCBot","?","Sailor (v3)")
         self.socket.settimeout(5*60) #Timeout set to 5 minuets
         self.recvThread.start()
         self.sendThread.start()
     
-    
-    ### Commands ###
+    def onConnected(self):
+        self.send("PRIVMSG","nickserv","identify "+self.password)
+        self.send("JOIN",",".join(self.autojoin))
     
     def initCommands(self):
         pass
-        
-    def onConnected(self):
-        pass
-    
+
     def onLoggedin(self):
         pass
