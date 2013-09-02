@@ -44,10 +44,11 @@ class capIzzy(ircBot):
         schedThread.deamon = True
 
     def initCommands(self):
-        self.commands = {
+        ircBot.initCommands(self)
+        self.commands.update({
             "meets":command(0,0,self.getUpcomingMeets),
             "navigate":command(2,2,self.navigateToMeet) #Tempremenal - Not fully implmented RSS feed lacks location data
-        }
+        })
         self.commands["nav"] = self.commands["navigate"]
     
     def getUpcomingMeets(self,cmdInfo):
@@ -79,5 +80,5 @@ class capIzzy(ircBot):
             self.send("TOPIC","#bristolbronies","Next upcoming Bristol Bronies meet: {nextMeet}. For more upcoming meets type '.meets'".format(nextMeet=self.upComingMeets[0]))
         self.scheduler.enter(60*60,1000,capIzzy.updateMeetinfo,[self])
 
-capIzzy("irc.canternet.org",6667,"CaptainIzzyDev",PASSWORD,["#bristolbronies"]).connect()
+capIzzy("irc.canternet.org",6667,"CaptainIzzie",PASSWORD,["#bristolbronies"]).connect()
 

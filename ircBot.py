@@ -35,6 +35,12 @@ class command():
             botRef.send("PRIVMSG",caller,"Error whilst executing the command") #TODO exception
             print e
     
+    def help(self):
+        if self.fun.__doc__ == "":
+            raise NotImplementedError
+        else:
+            return self.fun.__doc__
+    
             
 class ircBot():
     def __init__(self,host,port,nick,password,autojoin=[]):
@@ -124,9 +130,17 @@ class ircBot():
                                 botCmd,botParams = params[1][1:].split(" ",1)
                                 botParams = botParams.split(" ")
                             except ValueError:
-                                botCmd = params[1][1:]
-                                botParams = []
-                            self.commands[botCmd](self,prefix[1],params[0],botParams)
+                                botCmd = params[1][1:].lower()
+                                botParams = [].lower()
+                            try:
+                                cmd = self.commands[botCmd](self,prefix[1],params[0],botParams)
+                            except KeyError:
+                                self.send("PRIVMSG",prefix[1],"Command {0} not found, try .help for a list of commands".format(cotCmd)) #TODO magic character
+                            else:
+                                try:
+                                    cmd(self,prefix[1],params[0],botParams)
+                                except:
+                                    #Error whilst executing command
                     elif command == 42:
                         self.onConnected()
                     elif command == 900:
@@ -159,7 +173,24 @@ class ircBot():
         self.send("JOIN",",".join(self.autojoin))
     
     def initCommands(self):
-        pass
+        self.commands = {
+            "help":command(0,1,self.helpCommand)
+        }
 
     def onLoggedin(self):
         pass
+        
+    def helpCommand(self,cmdInfo,cmd=None):
+        if cmd is None:
+            self.send("PRIVMSG",cmdInfo["replyTo"],"The following commands are accepted: {0}".format(" ".join(["."+c for c in self.commands,keys()]))) #TODO magic character
+            self.send("PRIVMSG",cmdInfo["replyTo"],"Use .help [command] for more info on each one")
+        else:
+            if cmd[0] == ".":   #TODO magic character
+                cmd = cmd[1:]
+            cmd = cmd.lower()
+            try:
+                self.send("PRIVMSG",cmdInfo["replyTo"],self.commands[cmd].help())
+            except KeyError:
+                self.send("PRIVMSG",cmdInfo["replyTo"],"Command {0} not found, try .help for a list of commands".format(cmd)) #TODO magic character
+            except NotImplementedError:
+                self.send("PRIVMSG",cmdInfo["replyTo"],"No help for the {0} command found.")
