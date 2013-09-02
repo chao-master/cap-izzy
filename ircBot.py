@@ -135,12 +135,12 @@ class ircBot():
                             try:
                                 cmd = self.commands[botCmd](self,prefix[1],params[0],botParams)
                             except KeyError:
-                                self.send("PRIVMSG",prefix[1],"Command {0} not found, try .help for a list of commands".format(cotCmd)) #TODO magic character
+                                self.send("PRIVMSG",prefix[1],"Command {0} not found, try .help for a list of commands".format(botCmd)) #TODO magic character
                             else:
                                 try:
                                     cmd(self,prefix[1],params[0],botParams)
-                                except:
-                                    #Error whilst executing command
+                                except Exception as e:
+                                    self.send("PRIVMSG",prefix[1],"The following error occoured whilst executing the {0} command. {1}".format(botCmd,e)) #TODO magic character
                     elif command == 42:
                         self.onConnected()
                     elif command == 900:
